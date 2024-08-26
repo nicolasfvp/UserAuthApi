@@ -35,7 +35,7 @@ namespace UserAuthApi.Controllers
             return Ok("User created successfully!");
         }
 
-        [HttpPost("login")]
+        [HttpPost("login")] 
         public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
@@ -48,10 +48,12 @@ namespace UserAuthApi.Controllers
         }
 
         [HttpPost("change-password")]
-        [Authorize]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordModel model)
         {
-            var user = await _userManager.GetUserAsync(User);
+            
+            var userEmail = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByEmailAsync(userEmail);
             var result = await _userManager.ChangePasswordAsync(user, model.SenhaAtual, model.SenhaNova);
 
             if (!result.Succeeded)
@@ -63,24 +65,32 @@ namespace UserAuthApi.Controllers
         private string TokenService(IdentityUser user)
         {
 
-            var claims = new[]
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var issuer = _configuration.GetValue<dynamic>("Jwt:Issuer");
+            var audience = _configuration.GetValue<dynamic>("Jwt:Audience");
+            var KeyJwt = _configuration.GetValue<dynamic>("Jwt:Key");
+            var key = Encoding.UTF8.GetBytes(KeyJwt);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
+                Subject = new ClaimsIdentity(new[]
+                {
+                new Claim("Id", Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti,
+                Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id)
+             }),
+                Expires = DateTime.UtcNow.AddMinutes(5),
+                Issuer = issuer,
+                Audience = audience,
+                SigningCredentials = new SigningCredentials
+                (new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha512Signature)
             };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: null,
-                audience: null,
-                claims: claims,
-                expires: DateTime.Now.AddHours(3),
-                signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
     }
 
