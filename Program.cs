@@ -63,7 +63,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Version = "v1",
         Title = "API de Autenticação de Usuário",
-        Description = "Exemplo de API ASP.NET Core 6 com autenticação JWT",
+        Description = "Exemplo de API ASP.NET Core 8 com autenticação JWT",
         Contact = new OpenApiContact
         {
             Name = "Seu Nome",

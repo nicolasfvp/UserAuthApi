@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using UserAuthApi.Models;
 
 namespace UserAuthApi.Context
 {
@@ -10,6 +11,8 @@ namespace UserAuthApi.Context
             : base(options)
         {
         }
+        public DbSet<Metrics> Metrics { get; set; }
+        public DbSet<Orders> Orders { get; set; }
     }
 }
 

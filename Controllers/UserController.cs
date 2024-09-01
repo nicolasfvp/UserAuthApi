@@ -7,6 +7,8 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using UserAuthApi.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace UserAuthApi.Controllers
 {
@@ -16,11 +18,12 @@ namespace UserAuthApi.Controllers
     {
          private readonly UserManager<IdentityUser> _userManager;
         private readonly IConfiguration _configuration;
-
-        public AccountController(UserManager<IdentityUser> userManager, IConfiguration configuration)
+        private readonly UserDbContext _context;
+        public AccountController(UserManager<IdentityUser> userManager, IConfiguration configuration, UserDbContext context)
         {
             _userManager = userManager;
             _configuration = configuration;
+            _context = context;
         }
 
         [HttpPost("register")]
@@ -60,6 +63,38 @@ namespace UserAuthApi.Controllers
                 return BadRequest(result.Errors);
 
             return Ok("Password changed successfully!");
+        }
+
+        [HttpGet("get-metrics")]
+        public async Task<ActionResult<IEnumerable<Metrics>>> GetMetrics()
+        {
+            return await _context.Metrics.ToListAsync();
+        }
+
+        [HttpPost("post-metrics")]
+        public async Task<ActionResult<Metrics>> PostMetrics(Metrics metrics)
+        {
+            _context.Metrics.Add(metrics);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetMetrics), new { id = metrics.Id }, metrics);
+        }
+
+        [HttpGet("get-orders")]
+        public async Task<ActionResult<IEnumerable<Orders>>> GetOrders()
+        {
+            return await _context.Orders
+            .Where(order => order.Status != "Inativo")
+            .ToListAsync();
+        }
+
+        [HttpPost("post-orders")]
+        public async Task<ActionResult<Orders>> PostOrders(Orders orders)
+        {
+            _context.Orders.Add(orders);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetOrders), new { id = orders.Id }, orders);
         }
 
         private string TokenService(IdentityUser user)
