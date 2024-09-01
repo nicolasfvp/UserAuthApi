@@ -97,6 +97,23 @@ namespace UserAuthApi.Controllers
             return CreatedAtAction(nameof(GetOrders), new { id = orders.Id }, orders);
         }
 
+       [HttpPut("put-orders")]
+        public async Task<IActionResult> SetOrderInactive([FromBody] OrderIdRequest request)
+        {
+            var order = await _context.Orders.FindAsync(request.Id);
+
+            if (order == null)
+            {
+                return NotFound(new { message = "Pedido não encontrado" });
+            }
+
+            order.Status = "Inativo";
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Status do pedido alterado para Inativo" });
+        }
+
         private string TokenService(IdentityUser user)
         {
 
