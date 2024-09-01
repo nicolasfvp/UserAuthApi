@@ -65,6 +65,13 @@ namespace UserAuthApi.Controllers
             return Ok("Password changed successfully!");
         }
 
+        [HttpPost("auth-token")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> AuthToken()
+        {
+            return Ok("Authorized.");
+        }
+
         [HttpGet("get-metrics")]
         public async Task<ActionResult<IEnumerable<Metrics>>> GetMetrics()
         {
