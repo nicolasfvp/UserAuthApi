@@ -1,0 +1,11 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.csproj.user
+*.suo
+
+# User-specific files
+*.user
